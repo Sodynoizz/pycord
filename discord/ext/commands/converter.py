@@ -801,22 +801,25 @@ class PartialEmojiConverter(Converter[discord.PartialEmoji]):
     """
 
     async def convert(self, ctx: Context, argument: str) -> discord.PartialEmoji:
-        match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
-
-        if match:
-            emoji_animated = bool(match.group(1))
-            emoji_name = match.group(2)
-            emoji_id = int(match.group(3))
-
+        custom_emoji_match = re.match(r"<(a?):([a-zA-Z0-9\_]{1,32}):([0-9]{15,20})>$", argument)
+        if custom_emoji_match:
+            emoji_animated = bool(custom_emoji_match.group(1))
+            emoji_name = custom_emoji_match.group(2)
+            emoji_id = int(custom_emoji_match.group(3))
+            
             return discord.PartialEmoji.with_state(
                 ctx.bot._connection,
                 animated=emoji_animated,
                 name=emoji_name,
                 id=emoji_id,
             )
-
+        unicode_emoji_match = re.match(
+            r"^[\u0023-\u0039]?[\u00ae\u00a9\U00002000-\U0010ffff]+$", argument
+        )
+        if unicode_emoji_match:
+            return discord.PartialEmoji.with_state(ctx.bot._connection, name=argument)
+        
         raise PartialEmojiConversionFailure(argument)
-
 
 class GuildStickerConverter(IDConverter[discord.GuildSticker]):
     """Converts to a :class:`~discord.GuildSticker`.
